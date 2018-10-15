@@ -3,6 +3,8 @@
     https://gitlab.com/Andy4495/Pond-Sensor
 
     09/09/2018 - A.T. - Original
+    01/14/2018 - A.T. - Add support for DS18B20 Temp Sensor over
+                        1-Wire communication.
 */
 /* -----------------------------------------------------------------
 
@@ -25,6 +27,7 @@
    - External submerged temperature              F * 10 (not implemented yet)
    - Pump status                                 (not implemented yet)
    - Aerator status                              (not implemented yet)
+   - Battery Temp (when using BATTPACK or BATPAKMKII BoosterPacks)
    - Internal Timing:
                   Current value of millis()
 
@@ -65,16 +68,24 @@
 // If using without CC110L BoosterPack,
 // then comment out the following line:
 #define ENABLE_RADIO
-#define sleepTime 63000UL
+// Sleep Time in seconds
+#define sleepTime 69
+// *******************************
 // Define the type of battery used
 // BOOSTXL-BATPAKMKII:
-#define BATTPAKMKII
+//#define BATTPAKMKII
 // BOOSTXL-BATTPACK (using Hardware I2C):
 //#define BATTPACK_HWI2C
 // BoostXL-BATTPACK (using Software I2C):
 //#define BATTPACK_SWI2C
 // Other battery (e.g. 2xAA)
-//#define STANDARD_BATTERY
+#define STANDARD_BATTERY
+// ********************************
+// Pin number used to power the DS18B20 (instead of tieing directly to Vcc)
+#define DS18B20_SIGNAL_PIN  13
+#define DS18B20_POWER_PIN   11
+// Undefine BOARD_LED when putting the firmware into live system to save power
+#undef BOARD_LED
 // ************************************************ //
 
 #ifdef BATTPAKMKII
@@ -106,6 +117,7 @@ SWI2C myBQ27510(SW_SDA, SW_SCL, BQ27510_I2C_Address);
 
 #include <SPI.h>
 #include <AIR430BoostFCC.h>
+#include <OneWire.h>
 
 // CC110L Declarations
 #define ADDRESS_LOCAL   0x07    // This device
@@ -140,6 +152,30 @@ PondData ponddata;
 
 MspTemp msp430Temp;
 MspVcc  msp430Vcc;
+
+OneWire  ds18b20(DS18B20_SIGNAL_PIN);  // Requires a 4.7K pull-up resistor
+// Address is not needed since we only have one device on the bus
+uint8_t scratchpad[9];
+// OneWire commands
+#define GETTEMP         0x44  // Tells device to take a temperature reading and put it on the scratchpad
+#define COPYSCRATCH     0x48  // Copy EEPROM
+#define READSCRATCH     0xBE  // Read EEPROM
+#define WRITESCRATCH    0x4E  // Write to EEPROM
+// Scratchpad locations
+#define TEMP_LSB        0
+#define TEMP_MSB        1
+#define HIGH_ALARM_TEMP 2
+#define LOW_ALARM_TEMP  3
+#define CONFIGURATION   4
+#define INTERNAL_BYTE   5
+#define COUNT_REMAIN    6
+#define COUNT_PER_C     7
+#define SCRATCHPAD_CRC  8
+// Device resolution
+#define TEMP_9_BIT  0x1F //  9 bit
+#define TEMP_10_BIT 0x3F // 10 bit
+#define TEMP_11_BIT 0x5F // 11 bit
+#define TEMP_12_BIT 0x7F // 12 bit
 
 int            msp430T;
 int            msp430mV;
@@ -209,10 +245,41 @@ void setup() {
 #ifdef BATTPACK_SWI2C
   myBQ27510.begin();
 #endif
+
+  // DS18B20 Setup
+  digitalWrite(DS18B20_POWER_PIN, HIGH);
+  pinMode(DS18B20_POWER_PIN, OUTPUT);          // Turn on the power
+
+  // Read scratchpad to get current resolution value
+  ds18b20.reset();
+  ds18b20.skip();                    // Only one device on the bus, so don't need to bother with the address
+  ds18b20.write(READSCRATCH);        // no parasitic power (2nd argument defaults to zero)
+
+  for (int i = 0; i < 9; i++) {      // Read all 9 bytes
+    scratchpad[i] = ds18b20.read();
+  }
+
+  switch (scratchpad[CONFIGURATION]) {
+    case TEMP_9_BIT:
+      setResolution(TEMP_10_BIT);         // Change resolution to 10 bits
+      break;
+    case TEMP_10_BIT:
+      break;
+    case TEMP_11_BIT:
+      setResolution(TEMP_10_BIT);         // Change resolution to 10 bits
+      break;
+    case TEMP_12_BIT:
+      setResolution(TEMP_10_BIT);         // Change resolution to 10 bits
+      break;
+    default:
+      // Note: Unexpected CONFIG value
+      break;
+  }
 }
 
 
 void loop() {
+  int16_t celsius, fahrenheit;
 
   // MSP430 internal temp sensor
   msp430Temp.read(CAL_ONLY);   // Only get the calibrated reading
@@ -244,6 +311,35 @@ void loop() {
   ponddata.Battery_T = ((ponddata.Battery_T * 9) / 5) + 320; // Convert from C to F
 #endif
 
+  // Read the submerged temperature sensor (DS18B20)
+  // Turn the power back on
+  digitalWrite(DS18B20_POWER_PIN, HIGH);
+  pinMode(DS18B20_POWER_PIN, OUTPUT);
+
+  // Start temperature conversion
+  ds18b20.reset();
+  ds18b20.skip();                // Only one device on the bus, so don't need to bother with the address
+  ds18b20.write(GETTEMP);        // no parasitic power (2nd argument defaults to zero)
+  delay(225);     // 10-bit needs 187.5 ms for conversion, add a little extra just in case
+
+  // Read back the temperature
+  ds18b20.reset();
+  ds18b20.skip();
+  ds18b20.write(READSCRATCH);
+  for ( int i = 0; i < 2; i++) {           // Only need 2 bytes to get the temperature
+    scratchpad[i] = ds18b20.read();
+  }
+  pinMode(DS18B20_POWER_PIN, INPUT);          // Turn off the power to DS18B20
+
+  // Convert the data to actual temperature
+  int16_t raw = (scratchpad[1] << 8) | scratchpad[0]; // Put the temp bytes into a 16-bit integer
+  raw = raw & ~0x03;               // 10-bit resolution, so ignore 2 lsb
+  // Raw result is in 16ths of a degree Celsius
+  // fahrenheit = celsius * 1.8 + 32.0, but we want to use integer math
+  celsius = (raw * 10) >> 4;                   // Convert to 10th degree celsius
+  fahrenheit = ((celsius * 9) / 5) + 320;      // C to F using integer math (values are in tenth degrees)
+  ponddata.Submerged_T = fahrenheit;
+
   // Eventually add pump and aerator status
 
 
@@ -258,5 +354,23 @@ void loop() {
   led_status = ~led_status;
 #endif
 
-  sleep(sleepTime);
+  sleepSeconds(sleepTime);
+} /* loop() */
+
+void setResolution(uint8_t resolution) {
+  ds18b20.reset();
+  ds18b20.skip();                          // Only one device on the bus, so don't need to bother with the address
+  ds18b20.write(WRITESCRATCH);             // no parasitic power (2nd argument defaults to zero)
+
+  scratchpad[CONFIGURATION] = resolution;  // Set the resolution value. Don't care about TH and TL, so don't bother setting.
+
+  for (int i = HIGH_ALARM_TEMP; i <= CONFIGURATION; i++) {  // 3 bytes required for the WRITESCRATCH command
+    ds18b20.write(scratchpad[i]);
+  }
+
+  ds18b20.reset();
+  ds18b20.skip();                          // Only one device on the bus, so don't need to bother with the address
+  ds18b20.write(COPYSCRATCH);              // no parasitic power (2nd argument defaults to zero)
+
+  delay(15);                               // Need a minimum of 10ms per datasheet after copy scratch
 }
