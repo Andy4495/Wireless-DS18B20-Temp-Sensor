@@ -1,10 +1,13 @@
 /* -----------------------------------------------------------------
     Pond Sensor
-    https://gitlab.com/Andy4495/Pond-Sensor
+    https://gitlab.com/Andy4495/wireless-ds18b20-temp-sensor
 
     09/09/2018 - A.T. - Original
-    01/14/2018 - A.T. - Add support for DS18B20 Temp Sensor over
+    10/14/2018 - A.T. - Add support for DS18B20 Temp Sensor over
                         1-Wire communication.
+    02/19/2019 - A.T. - Simplify code by removing support for LiPo-
+                        based BATTPACK/BATPAKII BoosterPacks (since
+                        LiPos don't work well over outdoor temp range)
 */
 /* -----------------------------------------------------------------
 
@@ -27,7 +30,6 @@
    - External submerged temperature              F * 10 (not implemented yet)
    - Pump status                                 (not implemented yet)
    - Aerator status                              (not implemented yet)
-   - Battery Temp (when using BATTPACK or BATPAKMKII BoosterPacks)
    - Internal Timing:
                   Current value of millis()
 
@@ -71,16 +73,6 @@
 // Sleep Time in seconds
 #define sleepTime 69
 // *******************************
-// Define the type of battery used
-// BOOSTXL-BATPAKMKII:
-//#define BATTPAKMKII
-// BOOSTXL-BATTPACK (using Hardware I2C):
-//#define BATTPACK_HWI2C
-// BoostXL-BATTPACK (using Software I2C):
-//#define BATTPACK_SWI2C
-// Other battery (e.g. 2xAA)
-#define STANDARD_BATTERY
-// ********************************
 // Pin number used to power the DS18B20 (instead of tieing directly to Vcc)
 #define DS18B20_SIGNAL_PIN  13
 #define DS18B20_POWER_PIN   11
@@ -88,30 +80,6 @@
 #undef BOARD_LED
 // ************************************************ //
 
-#ifdef BATTPAKMKII
-#include <SWI2C.h>            // Need this since BQ27441_SWI2C uses it
-#include <BQ27441_SWI2C.h>
-// Change the following 2 defines to the pins you using to access BQ27441
-#define SW_SCL  9
-#define SW_SDA 10
-BQ27441_SWI2C myBQ27441(SW_SDA, SW_SCL);
-#endif
-
-#ifdef BATTPACK_HWI2C
-#include "FuelTankLibrary.h"
-FuelTank myFuelTank;
-#endif
-
-#ifdef BATTPACK_SWI2C
-#include <SWI2C.h>
-#define BQ27510_I2C_Address                 0x55
-#define BQ27510_Temperature                 0x06
-#define BQ27510_Voltage                     0x08
-// Change the following 2 defines to the pins you using to access BQ27441
-#define SW_SCL  9
-#define SW_SDA 10
-SWI2C myBQ27510(SW_SDA, SW_SCL, BQ27510_I2C_Address);
-#endif
 
 #include "MspTandV.h"
 
@@ -144,7 +112,6 @@ struct PondData {
   int             Pump_Status;    // Unimplemented
   int             Aerator_Status; // Unimplemented
   unsigned long   Millis;
-  int             Battery_T;      // Tenth degrees F
 };
 
 
@@ -240,11 +207,6 @@ void setup() {
   ponddata.Pump_Status = 0;
   ponddata.Aerator_Status = 0;
   ponddata.Millis = 0;
-  ponddata.Battery_T = 0;
-
-#ifdef BATTPACK_SWI2C
-  myBQ27510.begin();
-#endif
 
   // DS18B20 Setup
   digitalWrite(DS18B20_POWER_PIN, HIGH);
@@ -292,24 +254,6 @@ void loop() {
   ponddata.MSP_T     = msp430T;
   ponddata.Millis    = millis();
   ponddata.Batt_mV   = msp430mV;
-
-#ifdef BATTPAKMKII
-  ponddata.Batt_mV   = myBQ27441.readRegister(BQ27441_COMMAND_VOLTAGE);
-  ponddata.Battery_T = (((myBQ27441.readRegister(BQ27441_COMMAND_INT_TEMP) - 2730) * 9) / 5) + 320;
-#endif
-
-#ifdef BATTPACK_HWI2C
-  myFuelTank.get();
-  ponddata.Batt_mV   = myFuelTank.voltage_mV();
-  ponddata.Battery_T = ((myFuelTank.temperature_oCx10() * 9) / 5) + 320; // Convert from C to F
-#endif
-
-#ifdef BATTPACK_SWI2C
-  uint16_t data;
-  ponddata.Batt_mV   = myBQ27510.read2bFromRegister(BQ27510_Voltage, &data);
-  ponddata.Battery_T = (int16_t) myBQ27510.read2bFromRegister(BQ27510_Temperature, &data);
-  ponddata.Battery_T = ((ponddata.Battery_T * 9) / 5) + 320; // Convert from C to F
-#endif
 
   // Read the submerged temperature sensor (DS18B20)
   // Turn the power back on
