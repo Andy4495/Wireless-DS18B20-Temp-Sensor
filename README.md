@@ -3,7 +3,7 @@ Wireless DS18B20 Temperature Sensor
 
 The wireless temperature sensor is designed to use an MSP430 LauchPad, CC110L BoosterPack [430BOOST-CC110L][4], and SparkFun's waterproof version of the [DS18B20 temperature sensor][1] (Adafruit sells a similar model). It shows how to use the built-in OneWire library to get temperature readings from the [DS18B20 Digital Thermometer][2].
 
-The sketch and hardware is designed for low-power operation and can operate on a set of 3 alkaline AA cells for approximately one year. Be sure to remove jumpers from the isolation block and LEDs to minimize power usage of the LaunchPad. 
+The sketch and hardware is designed for low-power operation and can operate on a set of 3 alkaline AA cells for approximately one year. Be sure to remove jumpers from the isolation block and LEDs to minimize power usage of the LaunchPad.
 
 The sketch uses a specific data structure for sending the temperature readings to my [Wireless Sensor Receiver Hub][3], but could easily be adapted to other applications and data formats.
 
@@ -29,7 +29,7 @@ The sketch currently defines the following pin configuration for the temp sensor
 
 [1]: https://www.sparkfun.com/products/11050
 [2]: https://cdn.sparkfun.com/datasheets/Sensors/Temp/DS18B20.pdf
-[3]: https://gitlab.com/Andy4495/Sensor-Receiver
+[3]: https://github.com/Andy4495/Sensor-Receiver
 [4]: http://www.ti.com/tool/430BOOST-CC110L
 [5]: http://www.ti.com/lit/ug/slvu122/slvu122.pdf
-[6]: https://gitlab.com/Andy4495/mspTandV/tree/master
+[6]: https://github.com/Andy4495/mspTandV

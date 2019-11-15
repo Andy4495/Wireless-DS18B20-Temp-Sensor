@@ -1,6 +1,6 @@
 /* -----------------------------------------------------------------
     Pond Sensor
-    https://gitlab.com/Andy4495/wireless-ds18b20-temp-sensor
+    https://github.com/Andy4495/wireless-ds18b20-temp-sensor
 
     09/09/2018 - A.T. - Original
     10/14/2018 - A.T. - Add support for DS18B20 Temp Sensor over
@@ -37,7 +37,7 @@
   /*
     External libraries:
       Calibrated Temp and Vcc library "MspTandV"
-         https://gitlab.com/Andy4495/MspTandV
+         https://github.com/Andy4495/MspTandV
 
 */
 
