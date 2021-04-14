@@ -27,9 +27,14 @@ The sketch currently defines the following pin configuration for the temp sensor
 * CC110L-based Sensor [Receiver Hub][3]
 * [TPS715A33][5] low dropout regulator
 
+## License ##
+The software and other files in this repository are released under what is commonly called the [MIT License][100]. See the file [`LICENSE.txt`][101] in this repository.
+
 [1]: https://www.sparkfun.com/products/11050
 [2]: https://cdn.sparkfun.com/datasheets/Sensors/Temp/DS18B20.pdf
 [3]: https://github.com/Andy4495/Wireless-Sensor-Receiver-Hub
 [4]: http://www.ti.com/tool/430BOOST-CC110L
 [5]: http://www.ti.com/lit/ug/slvu122/slvu122.pdf
 [6]: https://github.com/Andy4495/mspTandV
+[100]: https://choosealicense.com/licenses/mit/
+[101]: ./LICENSE.txt
