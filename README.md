@@ -3,7 +3,7 @@
 [![Arduino Compile Sketches](https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor/actions/workflows/arduino-compile-sketches.yml/badge.svg)](https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor/actions/workflows/arduino-compile-sketches.yml)
 [![Check Markdown Links](https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor/actions/workflows/CheckMarkdownLinks.yml/badge.svg)](https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor/actions/workflows/CheckMarkdownLinks.yml)
 
-The wireless temperature sensor is designed to use an MSP430 LauchPad, CC110L BoosterPack [430BOOST-CC110L][4], and SparkFun's waterproof version of the [DS18B20 temperature sensor][1] (Adafruit sells a similar model). It shows how to use the built-in OneWire library to get temperature readings from the [DS18B20 Digital Thermometer][2].
+The wireless temperature sensor is designed to use an MSP430 LauchPad, CC110L BoosterPack [430BOOST-CC110L][4], and SparkFun's waterproof version of the [DS18B20 temperature sensor][1]. It shows how to use the built-in OneWire library to get temperature readings from the [DS18B20 Digital Thermometer][2].
 
 The sketch and hardware is designed for low-power operation and can operate on a set of 3 alkaline AA cells for approximately one year. Be sure to remove jumpers from the isolation block and LEDs to minimize power usage of the LaunchPad.
 
@@ -27,6 +27,7 @@ The sketch currently defines the following pin configuration for the temp sensor
 
 * [DS18B20][2] Digital Thermometer
 * SparkFun [Waterproof Temperature Sensor with DS18B20][1]
+  * Adafruit sells a [similar sensor][8] that should work the same.
 * CC110L BoosterPack [Quick Start Guide][4]
 * CC110L-based Sensor [Receiver Hub][3]
 * [TPS715A33][5] low dropout regulator
@@ -42,6 +43,7 @@ The software and other files in this repository are released under what is commo
 [5]: http://www.ti.com/lit/ug/slvu122/slvu122.pdf
 [6]: https://github.com/Andy4495/mspTandV
 [7]: https://github.com/PaulStoffregen/OneWire
+[8]: https://www.adafruit.com/product/381
 [100]: https://choosealicense.com/licenses/mit/
 [101]: ./LICENSE.txt
 [200]: https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor
