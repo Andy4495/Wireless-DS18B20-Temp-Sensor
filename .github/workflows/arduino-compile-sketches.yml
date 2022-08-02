@@ -32,6 +32,6 @@ jobs:
             - source-url: https://github.com/Andy4495/MspTandV.git
             - source-url: https://github.com/PaulStoffregen/OneWire.git
       - name: Print the job summary
-        if: ${{ inputs.message != null }}
+        if: ${{ inputs.message }}
         run: |
           echo ${{ inputs.message }} >$GITHUB_STEP_SUMMARY
