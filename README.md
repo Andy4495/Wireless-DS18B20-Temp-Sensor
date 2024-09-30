@@ -1,7 +1,7 @@
 # Wireless DS18B20 Temperature Sensor
 
 [![Arduino Compile Sketches](https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor/actions/workflows/arduino-compile-sketches.yml/badge.svg)](https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor/actions/workflows/arduino-compile-sketches.yml)
-[![Check Markdown Links](https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor/actions/workflows/CheckMarkdownLinks.yml/badge.svg)](https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor/actions/workflows/CheckMarkdownLinks.yml)
+[![Check Markdown Links](https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor/actions/workflows/check-links.yml/badge.svg)](https://github.com/Andy4495/Wireless-DS18B20-Temp-Sensor/actions/workflows/check-links.yml)
 
 The wireless temperature sensor is designed to use an MSP430 LauchPad, CC110L BoosterPack [430BOOST-CC110L][4], and SparkFun's waterproof version of the [DS18B20 temperature sensor][1]. It shows how to use the built-in OneWire library to get temperature readings from the [DS18B20 Digital Thermometer][2].
 
